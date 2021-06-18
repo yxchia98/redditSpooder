@@ -61,22 +61,25 @@ def getstocklist(db):
     allstocks = []
     stockdict = {}
     count = 0
+    titlelist = []
     for x in db.wallstbets.find():
         stocks = re.findall('\$([A-Z]+)', x['title'])
         if len(stocks):
             allstocks.extend(i for i in stocks if i not in allstocks and len(i) > 1)
-    print(allstocks)
     for x in db.wallstbets.find():
-        if any(stock in x['title'] for stock in allstocks):
+        titlelist = re.split('; |;|, |,|\$| ',x['title'])
+        if any(stock in titlelist for stock in allstocks):
             count += 1
             for stock in allstocks:
-                if stock in x['title']:
+                if stock in titlelist:
+                    print(x['title'], 'stock=', stock)
                     if stock in stockdict.keys():
                         stockdict[stock] += 1
                     else:
                         stockdict[stock] = 1
+    print(allstocks)
     sortedstockdict = sorted(stockdict.items(), key=lambda x: x[1], reverse=True)
-    print('Posts that contains stocks:', count)
+    print('Posts that contains stocks:', count, 'crosschecking:', sum(stockdict.values()))
     return sortedstockdict
 
 
