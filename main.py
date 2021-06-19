@@ -1,5 +1,6 @@
 import urllib.parse
 
+import nltk
 import praw
 import datetime as dt
 import re
@@ -42,9 +43,11 @@ def crawl(subreddit, amount, type, db, duration: str = 'all'):
         for post in posts:
             count += 1
             print('posts crawled:', count, 'postid:', post.id)
-            postlist.append({'_id': post.id, 'user': '[deleted]' if not post.author else post.author.name, 'title': post.title, 'upvotes': post.score,
-                             'body': post.selftext, 'url': post.url,
-                             'time': dt.datetime.utcfromtimestamp(post.created)})
+            postlist.append(
+                {'_id': post.id, 'user': '[deleted]' if not post.author else post.author.name, 'title': post.title,
+                 'upvotes': post.score,
+                 'body': post.selftext, 'url': post.url,
+                 'time': dt.datetime.utcfromtimestamp(post.created)})
         db.wallstbets.insert_many(postlist)
 
     if type == 'new':
@@ -57,11 +60,11 @@ def crawl(subreddit, amount, type, db, duration: str = 'all'):
                              'time': dt.datetime.utcfromtimestamp(post.created)})
         db.wallstbets.insert_many(postlist)
 
+
 def getstocklist(db):
     allstocks = []
     stockdict = {}
     count = 0
-    titlelist = []
     filteredlist = []
     currentstocks = []
     db.wallstbets_filtered.drop()
@@ -70,7 +73,7 @@ def getstocklist(db):
         if len(stocks):
             allstocks.extend(i for i in stocks if i not in allstocks and len(i) > 1)
     for x in db.wallstbets.find():
-        titlelist = re.split('; |;|, |,|\$| ',x['title'])
+        titlelist = re.split('; |;|, |,|\$| ', x['title'])
         if any(stock in titlelist for stock in allstocks):
             count += 1
             for stock in allstocks:
@@ -87,9 +90,19 @@ def getstocklist(db):
     print(allstocks)
     sortedstockdict = sorted(stockdict.items(), key=lambda x: x[1], reverse=True)
     db.wallstbets_filtered.insert_many(filteredlist)
+    sentimentAnalysis(filteredlist)
     return sortedstockdict
 
 
+def sentimentAnalysis(stocklist):
+    nltk.download('stopwords')
+    nltk.download('punkt')
+    stop_words = nltk.corpus.stopwords.words('english')
+    stop_words.append('$')
+    stop_words = set(stop_words)
+    print(stop_words)
+    # for x in stocklist:
+    #     print(nltk.tokenize.word_tokenize(x['title']))
 
 
 if __name__ == '__main__':
