@@ -87,7 +87,6 @@ def getstocklist(db):
             currentstocks.clear()
             filteredlist.append(x)
 
-    print(allstocks)
     sortedstockdict = sorted(stockdict.items(), key=lambda x: x[1], reverse=True)
     db.wallstbets_filtered.insert_many(filteredlist)
     sentimentAnalysis(filteredlist)
@@ -97,10 +96,11 @@ def getstocklist(db):
 def sentimentAnalysis(stocklist):
     nltk.download('stopwords')
     nltk.download('punkt')
+    print('Resourced downloaded!')
     stop_words = nltk.corpus.stopwords.words('english')
     stop_words.append('$')
+    return 1
     stop_words = set(stop_words)
-    print(stop_words)
     # for x in stocklist:
     #     print(nltk.tokenize.word_tokenize(x['title']))
 
@@ -110,6 +110,15 @@ if __name__ == '__main__':
         "mongodb+srv://adm:" + urllib.parse.quote_plus(
             "P@ssw0rd123") + "@cluster0.qyord.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
     db = client.reddit
-    # crawl('wallstreetbets', 1000, 'top', db, 'week')
-    stocklist = getstocklist(db)
-    print(stocklist)
+    menu = False
+    while not menu:
+        choice = int(input("----MENU----\n1.Crawl data\n2.Analysis\n3.Exit\nEnter Choice:"))
+        if choice == 1:
+            crawlcategory = input('Enter reddit category(new/top/hot):')
+            crawlamount = input('Enter amount of posts to crawl:')
+            crawl('wallstreetbets', int(crawlamount), crawlcategory, db, 'week')
+        elif choice == 2:
+            stocklist = getstocklist(db)
+            print(stocklist)
+        else:
+            menu = True
