@@ -21,7 +21,6 @@ def crawl(subreddit, amount, type, db, duration: str = 'all'):
     db.wallstbets.drop()
     postlist = []
     count = 0
-    mentionedStock = ''
     if type == 'hot':
         posts = subreddit.hot(limit=amount)
         for post in posts:
@@ -55,6 +54,16 @@ def crawl(subreddit, amount, type, db, duration: str = 'all'):
 
     if type == 'new':
         posts = subreddit.new(limit=amount)
+        for post in posts:
+            count += 1
+            print('posts crawled:', count)
+            postlist.append({'_id': post.id, 'user': '[deleted]' if not post.author else post.author.name, 'title': post.title, 'upvotes': post.score,
+                             'body': post.selftext, 'url': post.url,
+                             'time': dt.datetime.utcfromtimestamp(post.created)})
+        db.wallstbets.insert_many(postlist)
+
+    if type == 'rising':
+        posts = subreddit.rising(limit=amount)
         for post in posts:
             count += 1
             print('posts crawled:', count)
@@ -128,7 +137,7 @@ if __name__ == '__main__':
         if choice == 1:
             crawlcategory = input('Enter reddit category(new/top/hot):')
             crawlamount = input('Enter amount of posts to crawl:')
-            crawl('wallstreetbets', int(crawlamount), crawlcategory, db, 'week')
+            crawl('wallstreetbets', int(crawlamount), crawlcategory, db, 'month')
         elif choice == 2:
             stocklist = getstocklist(db)
             print(stocklist)
