@@ -94,15 +94,23 @@ def getstocklist(db):
 
 
 def sentimentAnalysis(stocklist):
+    all_tokenized_words = []
+    filtered_sentence = []
     nltk.download('stopwords')
     nltk.download('punkt')
     print('Resourced downloaded!')
     stop_words = nltk.corpus.stopwords.words('english')
     stop_words.append('$')
-    return 1
     stop_words = set(stop_words)
-    # for x in stocklist:
-    #     print(nltk.tokenize.word_tokenize(x['title']))
+    for x in stocklist:
+        tokenized_words = nltk.tokenize.word_tokenize(x['title'])
+        for token in tokenized_words:
+            if token not in stop_words:
+                filtered_sentence.append(token)
+        print(filtered_sentence)
+        filtered_sentence.clear()
+
+    return 1
 
 
 if __name__ == '__main__':
