@@ -15,6 +15,8 @@ import pymongo as pymongo
 
 
 def crawl(subreddit, amount, type, db, duration: str = 'all'):
+    if not duration:
+        duration = 'all'
     reddit = praw.Reddit(client_id='ZKIZ1S_3H_qqQQ', client_secret='J55skYeS0sCjTkrBvu3Iuaf_i8GSDQ',
                          user_agent='spooder', username='lulmaomao', password='P@ssw0rd123')
     subreddit = reddit.subreddit(subreddit)
@@ -73,7 +75,7 @@ def crawl(subreddit, amount, type, db, duration: str = 'all'):
         db.wallstbets.insert_many(postlist)
 
 
-def getstocklist(db):
+def filterposts(db):
     allstocks = []
     stockdict = {}
     count = 0
@@ -110,17 +112,21 @@ def sentimentAnalysis(stocklist):
     filtered_list = []
     nltk.download('stopwords')
     nltk.download('punkt')
+    nltk.download('wordnet')
     stop_words = stopwords.words('english')
     stop_words.append('$')
     stop_words = set(stop_words)
+    lemmatizer = WordNetLemmatizer()
     for x in stocklist:
         tokenized_words = word_tokenize(x['title'])
         # for token in tokenized_words:
         #     if token.casefold() not in stop_words:
         #         filtered_sentence.append(token)
         filtered_sentence = [word for word in tokenized_words if word.casefold() not in stop_words]
-        print(filtered_sentence)
+        lemmatized_sentence = [lemmatizer.lemmatize(word) for word in filtered_sentence]
+        print("F:", filtered_sentence, "\nL:", lemmatized_sentence)
         # filtered_list.append(list(filtered_sentence))
+        lemmatized_sentence.clear()
         filtered_sentence.clear()
     print(filtered_list)
     return 1
@@ -135,11 +141,14 @@ if __name__ == '__main__':
     while not menu:
         choice = int(input("----MENU----\n1.Crawl data\n2.Analysis\n3.Exit\nEnter Choice:"))
         if choice == 1:
-            crawlcategory = input('Enter reddit category(new/top/hot):')
+            crawl_cateory_duration = input('Enter reddit category(new/top/hot/rising), followed by duration(all/month/week/day):')
+            crawl_cateory_duration = crawl_cateory_duration.split(',')
+            crawlcategory = crawl_cateory_duration[0]
+            crawlduration = crawl_cateory_duration[1] if len(crawl_cateory_duration) > 1 else None
             crawlamount = input('Enter amount of posts to crawl:')
-            crawl('wallstreetbets', int(crawlamount), crawlcategory, db, 'month')
+            crawl('wallstreetbets', int(crawlamount), crawlcategory, db, crawlduration if crawlduration else None)
         elif choice == 2:
-            stocklist = getstocklist(db)
+            stocklist = filterposts(db)
             print(stocklist)
         else:
             menu = True
