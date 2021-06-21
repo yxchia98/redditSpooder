@@ -1,6 +1,9 @@
 import urllib.parse
 
 import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
 import praw
 import datetime as dt
 import re
@@ -42,7 +45,7 @@ def crawl(subreddit, amount, type, db, duration: str = 'all'):
         posts = subreddit.top(duration, limit=amount)
         for post in posts:
             count += 1
-            print('posts crawled:', count, 'postid:', post.id)
+            print('posts crawled:', count)
             postlist.append(
                 {'_id': post.id, 'user': '[deleted]' if not post.author else post.author.name, 'title': post.title,
                  'upvotes': post.score,
@@ -55,7 +58,7 @@ def crawl(subreddit, amount, type, db, duration: str = 'all'):
         for post in posts:
             count += 1
             print('posts crawled:', count)
-            postlist.append({'_id': post.id, 'user': post.author.name, 'title': post.title, 'upvotes': post.score,
+            postlist.append({'_id': post.id, 'user': '[deleted]' if not post.author else post.author.name, 'title': post.title, 'upvotes': post.score,
                              'body': post.selftext, 'url': post.url,
                              'time': dt.datetime.utcfromtimestamp(post.created)})
         db.wallstbets.insert_many(postlist)
@@ -94,22 +97,23 @@ def getstocklist(db):
 
 
 def sentimentAnalysis(stocklist):
-    all_tokenized_words = []
     filtered_sentence = []
+    filtered_list = []
     nltk.download('stopwords')
     nltk.download('punkt')
-    print('Resourced downloaded!')
-    stop_words = nltk.corpus.stopwords.words('english')
+    stop_words = stopwords.words('english')
     stop_words.append('$')
     stop_words = set(stop_words)
     for x in stocklist:
-        tokenized_words = nltk.tokenize.word_tokenize(x['title'])
-        for token in tokenized_words:
-            if token not in stop_words:
-                filtered_sentence.append(token)
+        tokenized_words = word_tokenize(x['title'])
+        # for token in tokenized_words:
+        #     if token.casefold() not in stop_words:
+        #         filtered_sentence.append(token)
+        filtered_sentence = [word for word in tokenized_words if word.casefold() not in stop_words]
         print(filtered_sentence)
+        # filtered_list.append(list(filtered_sentence))
         filtered_sentence.clear()
-
+    print(filtered_list)
     return 1
 
 
