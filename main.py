@@ -77,6 +77,7 @@ def crawl(subreddit, amount, type, db, duration: str = 'all'):
                  'upvotes': post.score,
                  'body': post.selftext, 'url': post.url,
                  'time': dt.datetime.utcfromtimestamp(post.created)})
+
         db.wallstbets.insert_many(postlist)
 
 
