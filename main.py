@@ -4,6 +4,7 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
+from nltk.sentiment import SentimentIntensityAnalyzer
 import praw
 import datetime as dt
 import re
@@ -59,9 +60,11 @@ def crawl(subreddit, amount, type, db, duration: str = 'all'):
         for post in posts:
             count += 1
             print('posts crawled:', count)
-            postlist.append({'_id': post.id, 'user': '[deleted]' if not post.author else post.author.name, 'title': post.title, 'upvotes': post.score,
-                             'body': post.selftext, 'url': post.url,
-                             'time': dt.datetime.utcfromtimestamp(post.created)})
+            postlist.append(
+                {'_id': post.id, 'user': '[deleted]' if not post.author else post.author.name, 'title': post.title,
+                 'upvotes': post.score,
+                 'body': post.selftext, 'url': post.url,
+                 'time': dt.datetime.utcfromtimestamp(post.created)})
         db.wallstbets.insert_many(postlist)
 
     if type == 'rising':
@@ -69,9 +72,11 @@ def crawl(subreddit, amount, type, db, duration: str = 'all'):
         for post in posts:
             count += 1
             print('posts crawled:', count)
-            postlist.append({'_id': post.id, 'user': '[deleted]' if not post.author else post.author.name, 'title': post.title, 'upvotes': post.score,
-                             'body': post.selftext, 'url': post.url,
-                             'time': dt.datetime.utcfromtimestamp(post.created)})
+            postlist.append(
+                {'_id': post.id, 'user': '[deleted]' if not post.author else post.author.name, 'title': post.title,
+                 'upvotes': post.score,
+                 'body': post.selftext, 'url': post.url,
+                 'time': dt.datetime.utcfromtimestamp(post.created)})
         db.wallstbets.insert_many(postlist)
 
 
@@ -108,27 +113,25 @@ def filterposts(db):
 
 
 def sentimentAnalysis(stocklist):
-    filtered_sentence = []
-    filtered_list = []
     nltk.download('stopwords')
     nltk.download('punkt')
     nltk.download('wordnet')
+    nltk.download('vader_lexicon')
     stop_words = stopwords.words('english')
     stop_words.append('$')
     stop_words = set(stop_words)
     lemmatizer = WordNetLemmatizer()
+    sia = SentimentIntensityAnalyzer()
     for x in stocklist:
         tokenized_words = word_tokenize(x['title'])
-        # for token in tokenized_words:
-        #     if token.casefold() not in stop_words:
-        #         filtered_sentence.append(token)
         filtered_sentence = [word for word in tokenized_words if word.casefold() not in stop_words]
         lemmatized_sentence = [lemmatizer.lemmatize(word) for word in filtered_sentence]
-        print("F:", filtered_sentence, "\nL:", lemmatized_sentence)
-        # filtered_list.append(list(filtered_sentence))
+        lemmatized_sentence_string = ' '.join(lemmatized_sentence)
         lemmatized_sentence.clear()
         filtered_sentence.clear()
-    print(filtered_list)
+        print('Post:', lemmatized_sentence_string, '\nSentiment:',
+              sia.polarity_scores(lemmatized_sentence_string)['compound'], 'Stocks:', x['stocks'])
+
     return 1
 
 
@@ -141,7 +144,8 @@ if __name__ == '__main__':
     while not menu:
         choice = int(input("----MENU----\n1.Crawl data\n2.Analysis\n3.Exit\nEnter Choice:"))
         if choice == 1:
-            crawl_cateory_duration = input('Enter reddit category(new/top/hot/rising), followed by duration(all/month/week/day):')
+            crawl_cateory_duration = input(
+                'Enter reddit category(new/top/hot/rising), followed by duration(all/month/week/day):')
             crawl_cateory_duration = crawl_cateory_duration.split(',')
             crawlcategory = crawl_cateory_duration[0]
             crawlduration = crawl_cateory_duration[1] if len(crawl_cateory_duration) > 1 else None
