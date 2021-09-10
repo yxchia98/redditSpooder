@@ -29,7 +29,7 @@ def crawl(subreddit, amount, type, db, duration: str = 'all'):
         for post in posts:
             count += 1
             print('posts crawled:', count)
-            postlist.append({'_id': post.id, 'user': post.author.name, 'title': post.title, 'upvotes': post.score,
+            postlist.append({'_id': post.id, 'user': '[deleted]' if not post.author else post.author.name, 'title': post.title, 'upvotes': post.score,
                              'body': post.selftext, 'url': post.url,
                              'time': dt.datetime.utcfromtimestamp(post.created)})
         db.wallstbets.insert_many(postlist)
